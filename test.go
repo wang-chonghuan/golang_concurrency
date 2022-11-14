@@ -17,7 +17,8 @@ import (
 
 type Pointer *ArbitraryType
 */
-const GlobalSqrRootOfNumCores = 8
+
+const GlobalSqrRootOfNumCores = 4
 
 func callAlgoMatMultiply(mA M, mB M, algo func(M, M) M, title string) M {
 	start1 := time.Now()
@@ -44,10 +45,6 @@ func test_All() {
 	//callAlgoMatMultiply(mA, mB, MultiplyStandardParallel, "MultiplyStandardParallel")
 	//callAlgoMatMultiply(mA, mB, MultiplyStandard, "MultiplyStandard")
 	callAlgoMatMultiply(mA, mB, MultiplyCannonParallelAnyDefault, "MultiplyCannonParallelAnyDefault")
-}
-
-func main2() {
-	test_All()
 }
 
 func test_strassen() {
