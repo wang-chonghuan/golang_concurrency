@@ -1,9 +1,27 @@
 package main
 
+import "fmt"
+
 type Strip struct {
-	wStrip        int // number of elements in a substrip
-	lStrip        int // number of substrips in a strip
-	substripArray M   // substrip listed in a strip
+	wStrip        int  // number of elements in a substrip
+	lStrip        int  // number of substrips in a strip
+	substripArray M    // substrip listed in a strip
+	isRow         bool // !!!if the strip is listed as rows(when isRow is true), its substrips are listed as cols!!!
+}
+
+func (o *Strip) multipyByOuterProduct(right *Strip) M {
+	result := CreateZeroMatrix(o.wStrip, right.wStrip)
+	outerProduct := CreateZeroMatrix(o.wStrip, right.wStrip)
+	for iSubstrip := 0; iSubstrip < o.lStrip; iSubstrip++ {
+		for iLeft := 0; iLeft < o.wStrip; iLeft++ {
+			for iRight := 0; iRight < right.wStrip; iRight++ {
+				outerProduct[iLeft][iRight] = o.substripArray[iSubstrip][iLeft] * right.substripArray[iSubstrip][iRight]
+			}
+		}
+		outerProduct.printMat(fmt.Sprintf("outerProduct %v", iSubstrip))
+		result = addMat(result, outerProduct)
+	}
+	return result
 }
 
 func CreateEmptyStrip(wStrip int, lStrip int) Strip {
@@ -40,6 +58,23 @@ type StripMat struct {
 	nStrip     int     // how many strips in the matrix
 	stripArray []Strip // strip listed in a matrix
 	isRow      bool    // are these strips listed as rows; if false, its cols
+}
+
+func (o *StripMat) multiply(right *StripMat) M {
+	nrRes := o.wStrip * o.nStrip
+	ncRes := right.wStrip * right.nStrip
+	result := CreateZeroMatrix(nrRes, ncRes)
+	for iLeft := 0; iLeft < o.nStrip; iLeft++ {
+		for iRight := 0; iRight < right.nStrip; iRight++ {
+			blockM := o.stripArray[iLeft].multipyByOuterProduct(&(right.stripArray[iRight]))
+			nrBm, ncBm := blockM.lens()
+			if nrBm != ncBm {
+				panic("(o *StripMat) multiply nrBm != ncBm")
+			}
+			joinMat(result, blockM, iRight*nrBm, iRight*nrBm+nrBm, iLeft*nrBm, iLeft*nrBm+nrBm)
+		}
+	}
+	return result
 }
 
 func CreateStripMat(srcMat M, isRow bool, wStrip int, lStrip int, nStrip int) StripMat {

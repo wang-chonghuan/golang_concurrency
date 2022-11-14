@@ -16,5 +16,7 @@ func test_summa() {
 	for i := 0; i < smB.nStrip; i++ {
 		smB.stripArray[i].substripArray.printMat(fmt.Sprintf("SMB substripArray %v", i))
 	}
-
+	result := smA.multiply(&smB)
+	result.printMat("smA.multiply(&smB)")
+	MultiplyStandardParallel(mA, mB).printMat("MultiplyStandardParallel(mA, mB)")
 }
