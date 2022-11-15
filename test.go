@@ -36,14 +36,14 @@ func test_cannonZero() {
 
 func test_All() {
 	//runtime.GOMAXPROCS(GlobalSqrRootOfNumCores * GlobalSqrRootOfNumCores)
-	mA := CreateRandomMatrix(100, 150, 1000, 1)
+	mA := CreateRandomMatrix(4096, 4096, 1000, 1)
 	//mA.printMat("mA")
-	mB := CreateRandomMatrix(150, 200, 1000, 2)
+	mB := CreateRandomMatrix(4096, 4096, 1000, 2)
 	//mB.printMat("mB")
 	r1 := callAlgoMatMultiply(mA, mB, MultiplySUMMA, "MultiplySUMMA")
-	//callAlgoMatMultiply(mA, mB, MultiplyCannonParallelAnyDefault, "MultiplyCannonParallelAnyDefault")
-	r2 := callAlgoMatMultiply(mA, mB, MultiplyStandardParallel, "MultiplyStandardParallel")
-	if r1.isEqual(&r2) {
+	r2 := callAlgoMatMultiply(mA, mB, MultiplyCannonParallelAnyDefault, "MultiplyCannonParallelAnyDefault")
+	r3 := callAlgoMatMultiply(mA, mB, MultiplyStandardParallel, "MultiplyStandardParallel")
+	if r1.isEqual(&r2) && r2.isEqual(&r3) {
 		fmt.Println("all correct")
 	}
 }
