@@ -36,6 +36,14 @@ func (o *M) init(rows int, cols int) {
 	o = (*M)(&m)
 }
 
+func (o *M) nr() int {
+	return len(*o)
+}
+
+func (o *M) nc() int {
+	return len((*o)[0])
+}
+
 func (o M) lens() (int, int) {
 	rows := len(o)
 	if rows == 0 {
@@ -73,6 +81,42 @@ func (o M) panicIfWrongDim(nr int, nc int) {
 	if nr != rows || nc != cols {
 		panic(fmt.Sprintf("this matrix(%vx%v) should be a %vx%v matrix", rows, cols, nr, nc))
 	}
+}
+
+func (o *M) isEqual(right *M) bool {
+	nr1, nc1 := o.lens()
+	nr2, nc2 := right.lens()
+	if nr1 != nr2 || nc1 != nc2 {
+		return false
+	}
+	for ir := 0; ir < nr1; ir++ {
+		for ic := 0; ic < nc1; ic++ {
+			if (*o)[ir][ic] != (*right)[ir][ic] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (m *M) addZeroCol() {
+	for ir := 0; ir < m.nr(); ir++ {
+		(*m)[ir] = append((*m)[ir], 0)
+	}
+}
+
+func (m *M) removeLastCol() {
+	for ir := 0; ir < m.nr(); ir++ {
+		(*m)[ir] = (*m)[ir][:len((*m)[ir])-1]
+	}
+}
+
+func (m *M) addZeroRow() {
+	*m = append(*m, make([]int, m.nc()))
+}
+
+func (m *M) removeLastRow() {
+	*m = (*m)[:len(*m)-1]
 }
 
 func PrintRowsCols(m1 M, m2 M) {

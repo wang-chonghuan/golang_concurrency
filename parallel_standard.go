@@ -1,6 +1,8 @@
 package main
 
-import "sync"
+import (
+	"sync"
+)
 
 func sumRowCol(m1 M, m2 M, irm1 int, icm2 int, n int) int {
 	var ret int

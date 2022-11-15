@@ -1,27 +1,25 @@
 package main
 
-import "fmt"
+import (
+	"sync"
+)
 
 type Strip struct {
-	wStrip        int  // number of elements in a substrip
-	lStrip        int  // number of substrips in a strip
-	substripArray M    // substrip listed in a strip
-	isRow         bool // !!!if the strip is listed as rows(when isRow is true), its substrips are listed as cols!!!
+	wStrip        int // number of elements in a substrip
+	lStrip        int // number of substrips in a strip
+	substripArray M   // substrip listed in a strip
 }
 
 func (o *Strip) multipyByOuterProduct(right *Strip) M {
-	result := CreateZeroMatrix(o.wStrip, right.wStrip)
 	outerProduct := CreateZeroMatrix(o.wStrip, right.wStrip)
 	for iSubstrip := 0; iSubstrip < o.lStrip; iSubstrip++ {
 		for iLeft := 0; iLeft < o.wStrip; iLeft++ {
 			for iRight := 0; iRight < right.wStrip; iRight++ {
-				outerProduct[iLeft][iRight] = o.substripArray[iSubstrip][iLeft] * right.substripArray[iSubstrip][iRight]
+				outerProduct[iLeft][iRight] += o.substripArray[iSubstrip][iLeft] * right.substripArray[iSubstrip][iRight]
 			}
 		}
-		outerProduct.printMat(fmt.Sprintf("outerProduct %v", iSubstrip))
-		result = addMat(result, outerProduct)
 	}
-	return result
+	return outerProduct
 }
 
 func CreateEmptyStrip(wStrip int, lStrip int) Strip {
@@ -35,7 +33,6 @@ func CreateEmptyStrip(wStrip int, lStrip int) Strip {
 	return s
 }
 
-// 此处可化简
 func (o *Strip) copyMatToStrip(srcMat *M, isRow bool, iBegin int, iEnd int) {
 	if isRow {
 		for ir := iBegin; ir < iEnd; ir++ {
@@ -54,7 +51,6 @@ func (o *Strip) copyMatToStrip(srcMat *M, isRow bool, iBegin int, iEnd int) {
 
 type StripMat struct {
 	wStrip     int     // number of elements in a substrip
-	lStrip     int     // number of substrips in a strip
 	nStrip     int     // how many strips in the matrix
 	stripArray []Strip // strip listed in a matrix
 	isRow      bool    // are these strips listed as rows; if false, its cols
@@ -64,22 +60,28 @@ func (o *StripMat) multiply(right *StripMat) M {
 	nrRes := o.wStrip * o.nStrip
 	ncRes := right.wStrip * right.nStrip
 	result := CreateZeroMatrix(nrRes, ncRes)
+	var wg sync.WaitGroup
 	for iLeft := 0; iLeft < o.nStrip; iLeft++ {
 		for iRight := 0; iRight < right.nStrip; iRight++ {
-			blockM := o.stripArray[iLeft].multipyByOuterProduct(&(right.stripArray[iRight]))
-			nrBm, ncBm := blockM.lens()
-			if nrBm != ncBm {
-				panic("(o *StripMat) multiply nrBm != ncBm")
-			}
-			joinMat(result, blockM, iRight*nrBm, iRight*nrBm+nrBm, iLeft*nrBm, iLeft*nrBm+nrBm)
+			wg.Add(1)
+			go stripMultiply(&(o.stripArray[iLeft]), &(right.stripArray[iRight]),
+				&result, iLeft, iRight, &wg)
 		}
 	}
+	wg.Wait()
 	return result
+}
+
+func stripMultiply(leftStrip *Strip, rightStrip *Strip, result *M, iLeft int, iRight int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	blockM := leftStrip.multipyByOuterProduct(rightStrip)
+	nrBm, _ := blockM.lens()
+	joinMat(*result, blockM, iRight*nrBm, iRight*nrBm+nrBm, iLeft*nrBm, iLeft*nrBm+nrBm)
 }
 
 func CreateStripMat(srcMat M, isRow bool, wStrip int, lStrip int, nStrip int) StripMat {
 	nr, nc := srcMat.lens()
-	sm := StripMat{isRow: isRow, wStrip: wStrip, lStrip: lStrip, nStrip: nStrip, stripArray: make([]Strip, nStrip)}
+	sm := StripMat{isRow: isRow, wStrip: wStrip, nStrip: nStrip, stripArray: make([]Strip, nStrip)}
 	if !((isRow && wStrip*nStrip == nr && lStrip == nc) || (!isRow && wStrip*nStrip == nc && lStrip == nr)) {
 		panic("CreateStripMat size not compatible")
 	}

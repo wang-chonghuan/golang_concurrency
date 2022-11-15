@@ -1,29 +1,18 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
-
 // Chonghuan Wang 22117989
 func MultiplyCannonParallelSquare(s1 M, s2 M, dimByBlock int, dimOfBlock int) M {
-	t1 := time.Now()
 	bmA := CreateBlockSqrMat(s1, dimOfBlock, dimByBlock)
 	bmB := CreateBlockSqrMat(s2, dimOfBlock, dimByBlock)
 	bmC := CreateEmptyBlockMat(dimByBlock, dimOfBlock)
-	fmt.Println(time.Since(t1).Milliseconds())
 	channles := CreateChannels(dimByBlock)
 	cluster := CreatCluster(dimByBlock, dimOfBlock, bmA, bmB, channles)
 	cluster.goProcs()
-	t3 := time.Now()
 	for i := 0; i < dimByBlock; i++ {
 		cluster.broadcastNextBlocksToProcs(bmA, bmB, i)
 	}
-	fmt.Println(time.Since(t3).Milliseconds())
-	t2 := time.Now()
 	cluster.closeProcs()
 	cluster.joinBlocks(dimOfBlock, &bmC.m)
-	fmt.Println(time.Since(t2).Milliseconds())
 	return bmC.m
 }
 
