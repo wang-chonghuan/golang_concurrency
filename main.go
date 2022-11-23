@@ -1,7 +1,7 @@
 package main
 
 const GlobalSqrRootOfNumCores = 4
-const MaxGoroutines = 256 * 256
+const MaxGoroutines = 64 * 64
 
 func main() {
 	test_All()
